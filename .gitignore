@@ -1,9 +1,9 @@
 # JetBrains
-/.idea
+/.idea/
 
 # Terraform
 *.tfstate
 *.tfstate.backup
 *.tfstate.lock.info
-/.terraform
+/.terraform/
 /credentials.json
