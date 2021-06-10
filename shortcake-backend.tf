@@ -20,4 +20,6 @@ module "database" {
 
   database_name = "${var.project_id}-backend"
   tier = "db-f1-micro"
+
+  deletion_protection = (var.release_type == "prod")
 }

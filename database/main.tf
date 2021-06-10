@@ -3,6 +3,8 @@ resource "google_sql_database_instance" "instance" {
   database_version = "POSTGRES_13"
   region           = var.region
 
+  deletion_protection = var.deletion_protection
+
   settings {
     tier = var.tier
   }
