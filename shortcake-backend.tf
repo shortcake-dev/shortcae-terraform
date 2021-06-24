@@ -21,6 +21,8 @@ module "cloud_run" {
   service_name = local.service_name
   region = var.region
   image = "us-docker.pkg.dev/cloudrun/container/hello"
+
+  sql_instance = module.database.database
 }
 
 module "database" {

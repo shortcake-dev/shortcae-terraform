@@ -8,6 +8,12 @@ resource "google_cloud_run_service" "cloud_run" {
         image = var.image
       }
     }
+
+    metadata {
+      annotations = {
+        "run.googleapis.com/cloudsql-instances" = var.sql_instance.connection_name
+      }
+    }
   }
 
   traffic {
