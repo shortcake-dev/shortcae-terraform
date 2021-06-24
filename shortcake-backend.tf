@@ -33,4 +33,6 @@ module "database" {
   tier = "db-f1-micro"
 
   deletion_protection = (var.release_type == "prod")
+
+  depends_on = [module.network]
 }
