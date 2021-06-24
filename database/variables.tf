@@ -13,3 +13,5 @@ variable "tier" {
 variable "deletion_protection" {
   type = bool
 }
+
+variable "vpc" {}
