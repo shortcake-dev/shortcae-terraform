@@ -3,20 +3,20 @@ locals {
 }
 
 module "network" {
-  source = "./network"
+  source = "./modules/network"
 
   network_name = local.service_name
 }
 
 module "docker_registry" {
-  source = "./docker_registry"
+  source = "./modules/docker_registry"
 
   region = var.region
   repository_id = local.service_name
 }
 
 module "cloud_run" {
-  source = "./cloud_run"
+  source = "./modules/cloud_run"
 
   service_name = local.service_name
   region = var.region
@@ -26,7 +26,7 @@ module "cloud_run" {
 }
 
 module "database" {
-  source = "./database"
+  source = "./modules/database"
 
   region = var.region
   vpc = module.network.vpc
