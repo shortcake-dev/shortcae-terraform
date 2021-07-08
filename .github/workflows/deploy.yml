@@ -24,9 +24,6 @@ jobs:
           terraform_version: 1.0.1
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
 
-      - name: "Activate workspace"
-        run: terraform workspace select prod
-
       - name: "Restore Terraform plugin cache"
         uses: actions/cache@v2
         with:
@@ -37,6 +34,8 @@ jobs:
 
       - name: "terraform init"
         run: terraform init --input=false
+        env:
+          TF_WORKSPACE: "prod"
 
       - name: "terraform plan"
         run: terraform plan --out tfplan --input=false
@@ -63,9 +62,6 @@ jobs:
           terraform_version: 1.0.1
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
 
-      - name: "Activate workspace"
-        run: terraform workspace select prod
-
       - name: "Restore Terraform plugin cache"
         uses: actions/cache@v2
         with:
@@ -76,6 +72,8 @@ jobs:
 
       - name: "terraform init"
         run: terraform init --input=false
+        env:
+          TF_WORKSPACE: "prod"
 
       - name: "Download tfplan from plan job"
         uses: actions/download-artifact@v2
