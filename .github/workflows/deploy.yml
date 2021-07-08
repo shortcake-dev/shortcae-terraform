@@ -6,6 +6,10 @@ on:
   push:
     branches: [ main ]
 
+env:
+  TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+  TF_IN_AUTOMATION: true
+
 jobs:
   plan-prod:
     runs-on: ubuntu-latest
@@ -19,6 +23,14 @@ jobs:
         with:
           terraform_version: 1.0.1
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Restore Terraform plugin cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-providers-${{ hashFiles('.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-providers-
 
       - name: "terraform init"
         run: terraform init --input false
@@ -50,6 +62,14 @@ jobs:
         with:
           terraform_version: 1.0.1
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Restore Terraform plugin cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-providers-${{ hashFiles('.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-providers-
 
       - name: "terraform init"
         run: terraform init --input false
