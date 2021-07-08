@@ -20,6 +20,9 @@ jobs:
           terraform_version: 1.0.1
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
 
+      - name: "terraform init"
+        run: terraform init
+
       - name: "Activate workspace"
         run: terraform workspace select shortcake-prod
 
@@ -47,6 +50,9 @@ jobs:
         with:
           terraform_version: 1.0.1
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "terraform init"
+        run: terraform init
 
       - name: "Activate workspace"
         run: terraform workspace select shortcake-prod
