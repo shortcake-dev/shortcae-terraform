@@ -33,13 +33,13 @@ jobs:
             terraform-providers-
 
       - name: "terraform init"
-        run: terraform init --input false
+        run: terraform init --input=false
 
       - name: "Activate workspace"
         run: terraform workspace select shortcake-prod
 
       - name: "terraform plan"
-        run: terraform plan --out tfplan --input false
+        run: terraform plan --out tfplan --input=false
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_PROD_SA_KEY_JSON }}
 
@@ -72,7 +72,7 @@ jobs:
             terraform-providers-
 
       - name: "terraform init"
-        run: terraform init --input false
+        run: terraform init --input=false
 
       - name: "Activate workspace"
         run: terraform workspace select shortcake-prod
@@ -83,6 +83,6 @@ jobs:
           name: tfplan-prod
 
       - name: "terraform apply"
-        run: terraform apply tfplan --input false
+        run: terraform apply tfplan --input=false
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_PROD_SA_KEY }}
