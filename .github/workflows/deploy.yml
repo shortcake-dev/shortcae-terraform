@@ -14,8 +14,6 @@ jobs:
   plan-prod:
     runs-on: ubuntu-latest
     environment: prod
-    env:
-      TF_WORKSPACE: "prod"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -36,6 +34,12 @@ jobs:
 
       - name: "terraform init"
         run: terraform init --input=false
+        env:
+          # https://support.hashicorp.com/hc/en-us/articles/360043550953
+          TF_WORKSPACE: "prod"
+
+      - name: "Activate workspace"
+        run: terraform workspace select prod
 
       - name: "terraform plan"
         run: terraform plan --out tfplan --input=false
@@ -52,8 +56,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ plan-prod ]
     environment: prod
-    env:
-      TF_WORKSPACE: "prod"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -74,6 +76,12 @@ jobs:
 
       - name: "terraform init"
         run: terraform init --input=false
+        env:
+          # https://support.hashicorp.com/hc/en-us/articles/360043550953
+          TF_WORKSPACE: "prod"
+
+      - name: "Activate workspace"
+        run: terraform workspace select prod
 
       - name: "Download tfplan from plan job"
         uses: actions/download-artifact@v2
