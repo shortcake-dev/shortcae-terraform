@@ -51,9 +51,14 @@ jobs:
           import sys
 
           command = ["terraform", "plan", "--input=false", "--detailed-exitcode"]
-          exit_code = subprocess.run(command, check=False).returncode
+          result = subprocess.run(command, check=False, capture_output=True)
 
+          exit_code = result.returncode
           print(f"Exit code: {exit_code}")
+
+          print(result.stdout[::-1])
+          print("%%%%%%%%%%%%%%%%%%%%%")
+          print(result.stderr[::-1])
 
           if exit_code == 0:
               plan_has_changes = False
