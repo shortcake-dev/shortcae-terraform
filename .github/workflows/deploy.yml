@@ -50,14 +50,10 @@ jobs:
             && EXIT_CODE=$? \
             || EXIT_CODE=$?
 
-          # Check exit code
-          if (( $EXIT_CODE == 1 )); then
-              exit 1
-          fi
-
           case "$EXIT_CODE" in
-              0) PLAN_HAS_CHANGES="false"
-              2) PLAN_HAS_CHANGES="true"
+              0) PLAN_HAS_CHANGES="false" ;;
+              1) exit 1 ;;
+              2) PLAN_HAS_CHANGES="true" ;;
           esac
 
           # Create output
