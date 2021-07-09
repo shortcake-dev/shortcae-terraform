@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod-plan
     outputs:
-      plan-has-changes: ${{ steps.plan.outputs.plan-has-changes }}
+      plan-has-changes: ${{ steps.plan-has-changes.outputs.plan-has-changes }}
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -44,13 +44,13 @@ jobs:
         run: terraform workspace select prod
 
       - name: "terraform plan"
-        id: plan
         continue-on-error: true
         run: terraform plan --input=false --detailed-exitcode
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_PROD_PLAN_SA_KEY_JSON }}
 
       - name: "Check for changes in Terraform plan"
+        id: plan-has-changes
         shell: python
         run: |
           import sys
@@ -68,7 +68,7 @@ jobs:
           print(f"::set-output name=plan-has-changes::8")
 
       - run: |
-          echo "Plan has changes: ${{ steps.plan.outputs.plan-has-changes }}"
+          echo "Plan has changes: ${{ steps.plan-has-changes.outputs.plan-has-changes }}"
 
   prod-approve:
     environment: prod-approve
