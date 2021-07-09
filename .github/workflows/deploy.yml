@@ -50,14 +50,16 @@ jobs:
             && EXIT_CODE=$? \
             || EXIT_CODE=$?
 
-          case "$EXIT_CODE" in
+          echo "@@@@@@@@@@ ${EXIT_CODE}"
+
+          case "${EXIT_CODE}" in
               0) PLAN_HAS_CHANGES="false" ;;
               1) exit 1 ;;
               2) PLAN_HAS_CHANGES="true" ;;
           esac
 
           # Create output
-          echo "::set-output name=plan-has-changes::$PLAN_HAS_CHANGES"
+          echo "::set-output name=plan-has-changes::${PLAN_HAS_CHANGES}"
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_PROD_PLAN_SA_KEY_JSON }}
 
