@@ -68,7 +68,7 @@ jobs:
           print(f"::set-output name=plan-has-changes::8")
 
       - run: |
-          echo "Plan has changes: ${{ steps.prod-plan.outputs.plan-has-changes }}"
+          echo "Plan has changes: ${{ steps.plan.outputs.plan-has-changes }}"
 
   prod-approve:
     environment: prod-approve
