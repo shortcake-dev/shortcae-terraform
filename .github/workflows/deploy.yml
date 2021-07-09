@@ -74,7 +74,7 @@ jobs:
     environment: prod-approve
     runs-on: ubuntu-latest
     needs: [ prod-plan ]
-    if: ${{ needs. != 'false' }}
+    if: ${{ needs.prod-plan.outputs.plan-has-changes != 'false' }}
     steps:
       - name: "NOP"
         run: |
