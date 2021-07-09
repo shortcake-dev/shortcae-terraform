@@ -43,50 +43,23 @@ jobs:
       - name: "Activate workspace"
         run: terraform workspace select prod
 
-      - name: "Check for changes in Terraform plan"
+      - name: "terraform plan"
         id: plan
-        shell: python
-        run: |
-          import subprocess
-          import sys
-
-          command = ["terraform", "plan", "--input=false", "--detailed-exitcode"]
-          result = subprocess.run(command, check=False)
-
-          exit_code = result.returncode
-          print(f"Exit code: {exit_code}")
-
-          if exit_code == 0:
-              plan_has_changes = False
-          elif exit_code == 2:
-              plan_has_changes = True
-          else:
-              sys.exit(exit_code)
-
-          print(f"::set-output name=plan-has-changes::{plan_has_changes}")
+        continue-on-error: true
+        run: terraform plan --input=false --detailed-exitcode
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_PROD_PLAN_SA_KEY_JSON }}
-          TF_LOG: trace
 
-#      - name: "Check for changes in Terraform plan"
-#        id: plan
-#        run: |
-#           terraform plan --input=false --detailed-exitcode \
-#               && EXIT_CODE=$? \
-#               || EXIT_CODE=$?
-#
-#          echo "EXIT_CODE=${EXIT_CODE}"
-#
-#          case "${EXIT_CODE}" in
-#              0) PLAN_HAS_CHANGES="false" ;;
-#              2) PLAN_HAS_CHANGES="true" ;;
-#              *) exit ${EXIT_CODE} ;;
-#          esac
-#
-#          # Create output
-#          echo "::set-output name=plan-has-changes::${PLAN_HAS_CHANGES}"
-#        env:
-#          GOOGLE_CREDENTIALS: ${{ secrets.GCP_PROD_PLAN_SA_KEY_JSON }}
+      - name: "Check for changes in Terraform plan"
+        run: |
+          case "${{ steps.plan.outputs.exitcode }}" in
+              0) PLAN_HAS_CHANGES="false" ;;
+              2) PLAN_HAS_CHANGES="true" ;;
+              *) exit ${{ steps.plan.outputs.exitcode }} ;;
+          esac
+
+          # Create output
+          echo "::set-output name=plan-has-changes::${PLAN_HAS_CHANGES}"
 
   prod-approve:
     environment: prod-approve
