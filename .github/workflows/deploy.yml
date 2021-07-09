@@ -48,10 +48,10 @@ jobs:
         run: |
           (exit 2) \
               && EXIT_CODE=$? \
-              || echo "%%%%%%%% $?"
-          # terraform plan --input=false --detailed-exitcode \
-          #     && EXIT_CODE=$? \
-          #     || echo "%%%%%%%% $?"
+              || echo "%%%%%%%%1 $?"
+           terraform plan --input=false --detailed-exitcode \
+               && EXIT_CODE=$? \
+               || echo "%%%%%%%%2 $?"
 
           echo "@@@@@@@@@@ ${EXIT_CODE}"
 
