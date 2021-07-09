@@ -51,15 +51,21 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_PROD_PLAN_SA_KEY_JSON }}
 
       - name: "Check for changes in Terraform plan"
+        shell: python
         run: |
-          case "${{ steps.plan.outputs.exitcode }}" in
-              0) PLAN_HAS_CHANGES="false" ;;
-              2) PLAN_HAS_CHANGES="true" ;;
-              *) exit ${{ steps.plan.outputs.exitcode }} ;;
-          esac
+          import sys
 
-          # Create output
-          echo "::set-output name=plan-has-changes::${PLAN_HAS_CHANGES}"
+          exit_code = ${{ steps.plan.outputs.exitcode }}
+          print(f"Exit code = {exit_code}")
+
+          if exit_code == 0:
+              plan_has_changes = "false"
+          elif exit_code == 2:
+              plan_has_changes = "true"
+          else:
+              sys.exit(exit_code)
+
+          print(f"::set-output name=plan-has-changes::{plan_has_changes}")
 
   prod-approve:
     environment: prod-approve
