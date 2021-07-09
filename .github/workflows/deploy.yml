@@ -46,14 +46,16 @@ jobs:
       - name: "Check for changes in Terraform plan"
         id: plan
         run: |
-          (terraform plan --input=false --detailed-exitcode) && EXIT_CODE=$? || EXIT_CODE=$?
+          terraform plan --input=false --detailed-exitcode \
+              && EXIT_CODE=$? \
+              || echo "%%%%%%%% $?"
 
           echo "@@@@@@@@@@ ${EXIT_CODE}"
 
           case "${EXIT_CODE}" in
               0) PLAN_HAS_CHANGES="false" ;;
-              1) exit 1 ;;
               2) PLAN_HAS_CHANGES="true" ;;
+              *) exit ${EXIT_CODE} ;;
           esac
 
           # Create output
