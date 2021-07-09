@@ -49,7 +49,7 @@ jobs:
           (exit 2) \
               && EXIT_CODE=$? \
               || echo "%%%%%%%%1 $?"
-           terraform plan --input=false --detailed-exitcode \
+           terraform plan --input=false --out=tfplan --detailed-exitcode \
                && EXIT_CODE=$? \
                || echo "%%%%%%%%2 $?"
 
