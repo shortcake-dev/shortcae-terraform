@@ -44,6 +44,7 @@ jobs:
         run: terraform workspace select prod
 
       - name: "terraform plan"
+        id: plan
         continue-on-error: true
         run: terraform plan --input=false --detailed-exitcode
         env:
