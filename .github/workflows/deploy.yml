@@ -65,7 +65,7 @@ jobs:
           else:
               sys.exit(exit_code)
 
-          print(f"::set-output name=plan-has-changes::{plan_has_changes}")
+          print(f"::set-output name=plan-has-changes::8")
 
       - run: |
           echo "Plan has changes: ${{ steps.prod-plan.outputs.plan-has-changes }}"
