@@ -67,11 +67,14 @@ jobs:
 
           print(f"::set-output name=plan-has-changes::{plan_has_changes}")
 
+       - run: |
+           echo "Plan has changes: ${{ steps.prod-plan.outputs.plan-has-changes }}"
+
   prod-approve:
     environment: prod-approve
     runs-on: ubuntu-latest
     needs: [ prod-plan ]
-    if: ${{ needs.prod-plan.outputs.plan-has-changes != 'false' }}
+    if: ${{ needs. != 'false' }}
     steps:
       - name: "NOP"
         run: |
