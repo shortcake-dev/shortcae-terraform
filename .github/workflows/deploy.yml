@@ -51,14 +51,10 @@ jobs:
           import sys
 
           command = ["terraform", "plan", "--input=false", "--detailed-exitcode"]
-          result = subprocess.run(command, check=False, capture_output=True)
+          result = subprocess.run(command, check=False)
 
           exit_code = result.returncode
           print(f"Exit code: {exit_code}")
-
-          print(result.stdout[::-1])
-          print("%%%%%%%%%%%%%%%%%%%%%")
-          print(result.stderr[::-1])
 
           if exit_code == 0:
               plan_has_changes = False
@@ -70,6 +66,7 @@ jobs:
           print(f"::set-output name=plan-has-changes::{plan_has_changes}")
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_PROD_PLAN_SA_KEY_JSON }}
+          TF_LOG=trace
 
 #      - name: "Check for changes in Terraform plan"
 #        id: plan
