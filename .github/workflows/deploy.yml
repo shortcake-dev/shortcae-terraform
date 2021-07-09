@@ -46,7 +46,7 @@ jobs:
       - name: "Check for changes in Terraform plan"
         id: plan
         run: |
-          terraform plan --input=false --out=tfplan --detailed-exitcode \
+          terraform plan --input=false --detailed-exitcode \
             && EXIT_CODE=$? \
             || EXIT_CODE=$?
 
@@ -62,9 +62,6 @@ jobs:
           echo "::set-output name=plan-has-changes::${PLAN_HAS_CHANGES}"
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_PROD_PLAN_SA_KEY_JSON }}
-
-      - name: "Show Terraform plan"
-        run: cat tfplan
 
   prod-approve:
     environment: prod-approve
