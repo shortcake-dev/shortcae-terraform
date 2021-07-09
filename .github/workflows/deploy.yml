@@ -45,13 +45,8 @@ jobs:
 
       - name: "Check for changes in Terraform plan"
         id: plan
-        shell: "bash {0}"
         run: |
-          # For whatever reason this doesn't work with the default shell.
-          # || $? is always 1 even if terraform exits with code 2
-          terraform plan --input=false --detailed-exitcode \
-              && EXIT_CODE=$? \
-              || echo "%%%%%%%% $?"
+          terraform plan --input=false --detailed-exitcode || echo "%%%%%%%% $?"
 
           echo "@@@@@@@@@@ ${EXIT_CODE}"
 
