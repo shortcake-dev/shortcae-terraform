@@ -112,7 +112,7 @@ jobs:
         continue-on-error: true
         run: terraform plan --input=false --out=tfplan --detailed-exitcode
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
 
       - name: "Check for changes in Terraform plan"
         id: plan-has-changes
