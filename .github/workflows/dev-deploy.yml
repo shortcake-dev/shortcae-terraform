@@ -62,7 +62,7 @@ jobs:
           # Not sure why http1.1 is necessary, but I get a PROTOCOL_ERROR without it
           curl \
             --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_SECRET }}" \
-            --header "Content-Type: application/vnd.api+json" \
+            --header "content-type: application/vnd.api+json" \
             --request PATCH \
             --data '{"data": {"type": "workspaces", "attributes": {"execution-mode": "local"}}}' \
             --http1.1 \
