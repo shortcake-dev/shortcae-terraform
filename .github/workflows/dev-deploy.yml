@@ -61,13 +61,13 @@ jobs:
         run: |
           # Not sure why http1.1 is necessary, but I get a PROTOCOL_ERROR without it
           curl \
-            --header "Authorization: Bearer SECRET" \
+            --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_SECRET }}" \
             --header "Content-Type: application/vnd.api+json" \
             --request PATCH \
-            --data '{"data": {"type": "workspaces", "attributes": {"execution-mode": "local"}}}' \
+            --data '{"data": {"type": "workspaces", "attributes": {"name": "${WORKSPACE_NAME}", "execution-mode": "local"}}}' \
             --http1.1 \
             --fail \
-            httpbin.org/patch
+            https://app.terraform.io/api/v2/organizations/${ORGANIZATION_NAME}/workspaces
         env:
           ORGANIZATION_NAME: ${{ env.TF_ORGANIZATION_NAME }}
           WORKSPACE_NAME: "${{ env.TF_WORKSPACE_PREFIX }}-${{ steps.workspace-name.outputs.workspace-name }}"
