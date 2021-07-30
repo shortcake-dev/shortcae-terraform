@@ -64,7 +64,7 @@ jobs:
             --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_SECRET }}" \
             --header "Content-Type: application/vnd.api+json" \
             --request PATCH \
-            --data '{"data": {"type": "workspaces", "attributes": {"operations": false}}}' \
+            --data '{"data": {"type": "workspaces", "attributes": {"execution-mode": "local"}}}' \
             --http1.1 \
             https://app.terraform.io/api/v2/organizations/${ORGANIZATION_NAME}/workspaces/${WORKSPACE_NAME}
         env:
