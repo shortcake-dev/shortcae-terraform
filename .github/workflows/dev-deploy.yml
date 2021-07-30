@@ -60,7 +60,7 @@ jobs:
       - name: "Make sure workspace is set to local execution mode"
         run: >
           curl
-            --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_TOKEN }}"
+            --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_SECRET }}"
             --header "Content-Type: application/vnd.api+json"
             --request PATCH
             --data '{"data": {"type": "workspaces", "attributes": {"operations": false}}}'
