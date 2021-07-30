@@ -10,11 +10,14 @@ env:
 
 jobs:
   dev-workspace:
-    name: "Create Terraform Cloud workspace if it doesn't exist"
+    name: "Create workspace"
     runs-on: ubuntu-latest
     outputs:
       workspace-name: ${{ steps.workspace-name.outputs.workspace-name }}
     steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+
       - name: "Get workspace name"
         id: workspace-name
         shell: python
@@ -25,7 +28,17 @@ jobs:
           print(f"Workspace name: {workspace_name}")
           print(f"::set-output name=workspace-name::{workspace_name}")
 
+      - name: "Set up Terraform"
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Create workspace"
+        run: terraform workspace new ${{ steps.workspace-name.outputs.workspace-name }}
+
   dev-plan:
+    name: "Terraform plan"
     runs-on: ubuntu-latest
     environment: dev-plan
     needs: [ dev-workspace ]
@@ -49,8 +62,6 @@ jobs:
           restore-keys: |
             terraform-providers-
 
-      # Note: This creates the workspace if it does not yet exist
-      # https://www.terraform.io/docs/cloud/run/cli.html#implicit-workspace-creation
       - name: "Terraform init"
         run: terraform init --input=false
         env:
@@ -93,6 +104,7 @@ jobs:
           path: tfplan
 
   dev-deploy:
+    name: "Deploy"
     environment: dev-deploy
     runs-on: ubuntu-latest
     needs: [ dev-workspace, dev-plan ]
