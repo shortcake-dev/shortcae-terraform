@@ -1,0 +1,119 @@
+name: dev-deploy
+
+on:
+  pull_request:
+
+env:
+  TF_IN_AUTOMATION: true
+  TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+  TF_VERSION: 1.0.1
+
+jobs:
+  dev-plan:
+    runs-on: ubuntu-latest
+    environment: dev-plan
+    needs: [ dev-workspace ]
+    outputs:
+      plan-has-changes: ${{ steps.plan-has-changes.outputs.plan-has-changes }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+
+      - name: "Set up Terraform"
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Restore Terraform plugin cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-providers-${{ hashFiles('.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-providers-
+
+      # Note: This creates the workspace if it does not yet exist
+      # https://www.terraform.io/docs/cloud/run/cli.html#implicit-workspace-creation
+      - name: "Terraform init"
+        run: terraform init --input=false
+        env:
+          # https://support.hashicorp.com/hc/en-us/articles/360043550953
+          TF_WORKSPACE: ${{ needs.dev-workspace.outputs.workspace-name }}
+
+      - name: "Activate workspace"
+        run: terraform workspace select ${{ needs.dev-workspace.outputs.workspace-name }}
+
+      - name: "Terraform plan"
+        id: plan
+        continue-on-error: true
+        run: terraform plan --input=false --out=tfplan --detailed-exitcode
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
+
+      - name: "Check for changes in Terraform plan"
+        id: plan-has-changes
+        shell: python
+        run: |
+          import sys
+
+          exit_code = ${{ steps.plan.outputs.exitcode }}
+          print(f"Exit code = {exit_code}")
+
+          if exit_code == 0:
+              plan_has_changes = "false"
+          elif exit_code == 2:
+              plan_has_changes = "true"
+          else:
+              sys.exit(exit_code)
+
+          print(f"Plan has changes: {plan_has_changes}")
+          print(f"::set-output name=plan-has-changes::{plan_has_changes}")
+
+      - name: "Upload tfplan for use in deploy job"
+        uses: actions/upload-artifact@v2
+        with:
+          name: tfplan
+          path: tfplan
+
+  dev-deploy:
+    environment: dev-deploy
+    runs-on: ubuntu-latest
+    needs: [ dev-workspace, dev-plan ]
+    if: ${{ needs.dev-plan.outputs.plan-has-changes == 'true' }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+
+      - name: "Set up Terraform"
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Restore Terraform plugin cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-providers-${{ hashFiles('.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-providers-
+
+      - name: "Terraform init"
+        run: terraform init --input=false
+        env:
+          # https://support.hashicorp.com/hc/en-us/articles/360043550953
+          TF_WORKSPACE: ${{ needs.dev-workspace.outputs.workspace-name }}
+
+      - name: "Activate workspace"
+        run: terraform workspace select ${{ needs.dev-workspace.outputs.workspace-name }}
+
+      - name: "Download tfplan from plan job"
+        uses: actions/download-artifact@v2
+        with:
+          name: tfplan
+
+      - name: "Terraform apply"
+        run: terraform apply --input=false =tfplan
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_DEPLOY_SA_KEY_JSON }}
