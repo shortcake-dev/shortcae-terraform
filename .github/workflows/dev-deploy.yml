@@ -66,6 +66,7 @@ jobs:
             --request PATCH \
             --data '{"data": {"type": "workspaces", "attributes": {"execution-mode": "local"}}}' \
             --http1.1 \
+            --fail \
             https://app.terraform.io/api/v2/organizations/${ORGANIZATION_NAME}/workspaces/${WORKSPACE_NAME}
         env:
           ORGANIZATION_NAME: ${{ env.TF_ORGANIZATION_NAME }}
