@@ -93,7 +93,7 @@ jobs:
       - name: "Terraform plan"
         id: plan
         continue-on-error: true
-        run: terraform plan --input=false --out=tfplan --detailed-exitcode
+        run: terraform plan --input=false --detailed-exitcode
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
 
@@ -115,12 +115,6 @@ jobs:
 
           print(f"Plan has changes: {plan_has_changes}")
           print(f"::set-output name=plan-has-changes::{plan_has_changes}")
-
-      - name: "Upload tfplan for use in deploy job"
-        uses: actions/upload-artifact@v2
-        with:
-          name: tfplan
-          path: tfplan
 
   dev-deploy:
     name: "Deploy"
@@ -155,12 +149,7 @@ jobs:
       - name: "Activate workspace"
         run: terraform workspace select ${{ needs.dev-workspace.outputs.workspace-name }}
 
-      - name: "Download tfplan from plan job"
-        uses: actions/download-artifact@v2
-        with:
-          name: tfplan
-
       - name: "Terraform apply"
-        run: terraform apply --input=false =tfplan
+        run: terraform apply --input=false
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_DEPLOY_SA_KEY_JSON }}
