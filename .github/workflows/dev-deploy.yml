@@ -58,17 +58,16 @@ jobs:
           || terraform workspace new ${{ steps.workspace-name.outputs.workspace-name }}
 
       - name: "Make sure workspace is set to local execution mode"
-        run: >
-          curl
-            --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_SECRET }}"
-            --header "Content-Type: application/vnd.api+json"
-            --request PATCH
-            --data '{"data": {"type": "workspaces", "attributes": {"operations": false}}}'
+        run: |
+          curl \
+            --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_SECRET }}" \
+            --header "Content-Type: application/vnd.api+json" \
+            --request PATCH \
+            --data '{"data": {"type": "workspaces", "attributes": {"operations": false}}}' \
             https://app.terraform.io/api/v2/organizations/${ORGANIZATION_NAME}/workspaces/${WORKSPACE_NAME}
         env:
           ORGANIZATION_NAME: ${{ env.TF_ORGANIZATION_NAME }}
           WORKSPACE_NAME: "${{ env.TF_WORKSPACE_PREFIX }}-${{ steps.workspace-name.outputs.workspace-name }}"
-
   dev-plan:
     name: "Terraform plan"
     runs-on: ubuntu-latest
