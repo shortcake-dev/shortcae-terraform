@@ -50,8 +50,10 @@ jobs:
         continue-on-error: true
         run: terraform init --input=false
 
-      - name: "Create workspace"
-        run: terraform workspace new ${{ steps.workspace-name.outputs.workspace-name }}
+      - name: "Create workspace if it doesn't already exist"
+        run: >
+          terraform workspace select ${{ steps.workspace-name.outputs.workspace-name }}
+          || terraform workspace new ${{ steps.workspace-name.outputs.workspace-name }}
 
   dev-plan:
     name: "Terraform plan"
