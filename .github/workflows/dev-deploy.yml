@@ -34,6 +34,9 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
 
+      - name: "Create plugin cache dir"
+        run: mkdir ${{ env.TF_PLUGIN_CACHE_DIR }}
+
       - name: "Restore Terraform plugin cache"
         uses: actions/cache@v2
         with:
@@ -67,6 +70,9 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Create plugin cache dir"
+        run: mkdir ${{ env.TF_PLUGIN_CACHE_DIR }}
 
       - name: "Restore Terraform plugin cache"
         uses: actions/cache@v2
