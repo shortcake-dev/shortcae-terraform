@@ -47,6 +47,7 @@ jobs:
           restore-keys: |
             terraform-providers-
 
+        # This needs to be done before selecting/creating workspace
       - name: "Terraform init"
         # This throws an error about unsupported workspaces for some reason
         continue-on-error: true
@@ -59,7 +60,6 @@ jobs:
 
       - name: "Make sure workspace is set to local execution mode"
         run: |
-          # Not sure why http1.1 is necessary, but I get a PROTOCOL_ERROR without it
           curl \
             --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_TOKEN }}" \
             --header "Content-Type: application/vnd.api+json" \
@@ -70,6 +70,7 @@ jobs:
         env:
           ORGANIZATION_NAME: ${{ env.TF_ORGANIZATION_NAME }}
           WORKSPACE_NAME: "${{ env.TF_WORKSPACE_PREFIX }}-${{ steps.workspace-name.outputs.workspace-name }}"
+
   dev-plan:
     name: "Terraform plan"
     runs-on: ubuntu-latest
@@ -109,6 +110,7 @@ jobs:
 
       - name: "Terraform plan"
         id: plan
+        # https://github.com/hashicorp/terraform/issues/29130
         continue-on-error: true
         run: terraform plan --input=false --out=tfplan --detailed-exitcode
         env:
