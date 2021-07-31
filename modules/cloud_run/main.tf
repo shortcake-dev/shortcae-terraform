@@ -12,6 +12,9 @@ resource "google_cloud_run_service" "cloud_run" {
     metadata {
       annotations = {
         "run.googleapis.com/cloudsql-instances" = var.sql_instance.connection_name
+
+        # No clustering (this may change for prod)
+        "autoscaling.knative.dev/maxScale" = 1
       }
     }
   }
