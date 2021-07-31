@@ -148,7 +148,7 @@ jobs:
     environment: dev-deploy
     runs-on: ubuntu-latest
     needs: [ dev-workspace, dev-plan ]
-    if: ${{ needs.dev-plan.outputs.plan-has-changes == true }}
+    if: ${{ needs.dev-plan.outputs.plan-has-changes == 'true' }}
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
