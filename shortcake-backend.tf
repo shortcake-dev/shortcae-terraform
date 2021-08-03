@@ -1,10 +1,3 @@
-locals {
-  deployment_name = join(
-    "-",
-    compact([var.project_id, var.release_type, var.deployment_name])
-  )
-}
-
 module "network" {
   source = "./modules/network"
 
@@ -14,7 +7,7 @@ module "network" {
 module "docker_registry" {
   source = "./modules/docker_registry"
 
-  region        = var.region
+  region        = local.region
   repository_id = local.deployment_name
 }
 
@@ -22,7 +15,7 @@ module "cloud_run" {
   source = "./modules/cloud_run"
 
   service_name = local.deployment_name
-  region       = var.region
+  region       = local.region
   image        = "us-docker.pkg.dev/cloudrun/container/hello"
 
   sql_instance = module.database.database
@@ -31,7 +24,7 @@ module "cloud_run" {
 module "database" {
   source = "./modules/database"
 
-  region = var.region
+  region = local.region
   vpc    = module.network.vpc
 
   database_name = local.deployment_name
