@@ -117,6 +117,7 @@ jobs:
         run: terraform plan --input=false --out=tfplan --detailed-exitcode
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
+          TF_VAR_deployment_name: "pr${{ github.event.number }}"
 
       - name: "Check for changes in Terraform plan"
         id: plan-has-changes

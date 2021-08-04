@@ -1,14 +1,10 @@
 variable "release_type" {
-  type = string
+  type    = string
   default = "dev"
 }
 
-variable "region" {
-  type = string
-  default = "us-west1"
-}
-
-variable "project_id" {
-  type = string
-  default = "shortcake-dev"
+variable "deployment_name" {
+  description = "Auxiliary suffix to append to release for resource names"
+  type        = string
+  default     = null
 }

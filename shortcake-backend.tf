@@ -1,26 +1,22 @@
-locals {
-  service_name = "${var.project_id}-backend"
-}
-
 module "network" {
   source = "./modules/network"
 
-  network_name = local.service_name
+  network_name = local.deployment_name
 }
 
 module "docker_registry" {
   source = "./modules/docker_registry"
 
-  region = var.region
-  repository_id = local.service_name
+  region        = local.region
+  repository_id = local.deployment_name
 }
 
 module "cloud_run" {
   source = "./modules/cloud_run"
 
-  service_name = local.service_name
-  region = var.region
-  image = "us-docker.pkg.dev/cloudrun/container/hello"
+  service_name = local.deployment_name
+  region       = local.region
+  image        = "us-docker.pkg.dev/cloudrun/container/hello"
 
   sql_instance = module.database.database
 }
@@ -28,11 +24,11 @@ module "cloud_run" {
 module "database" {
   source = "./modules/database"
 
-  region = var.region
-  vpc = module.network.vpc
+  region = local.region
+  vpc    = module.network.vpc
 
-  database_name = local.service_name
-  tier = "db-f1-micro"
+  database_name = local.deployment_name
+  tier          = "db-f1-micro"
 
   deletion_protection = (var.release_type == "prod")
 
