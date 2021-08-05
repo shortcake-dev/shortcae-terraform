@@ -210,7 +210,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev-plan
     needs: [ dev-workspace-exists, dev-destroy ]
-    if: ${{ needs.dev-workspace-exists.outputs.dev-workspace-exists == 'true' }}
+    if: ${{ needs.dev-workspace-exists.outputs.workspace-exists == 'true' }}
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
