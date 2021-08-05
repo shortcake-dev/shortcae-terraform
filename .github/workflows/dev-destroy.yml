@@ -235,14 +235,5 @@ jobs:
           # https://support.hashicorp.com/hc/en-us/articles/360043550953
           TF_WORKSPACE: ${{ needs.dev-workspace-exists.outputs.workspace-name }}
 
-      - name: "Activate workspace"
-        run: terraform workspace select ${{ needs.dev-workspace-exists.outputs.workspace-name }}
-
-      - name: "Assert that destroy would do nothing"
-        run: terraform plan --destroy --input=false --detailed-exitcode
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
-          TF_VAR_deployment_name: "pr${{ github.event.number }}"
-
       - name: "Delete workspace"
         run: terraform workspace delete ${{ needs.dev-workspace-exists.outputs.workspace-name }}
