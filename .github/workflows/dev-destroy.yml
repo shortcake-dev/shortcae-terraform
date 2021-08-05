@@ -64,7 +64,7 @@ jobs:
               WORKSPACE_EXISTS=false
           fi
 
-          echo "Workspace ${WORKSPACE_NAME} exists: ${WORKSPACE_EXISTS}
+          echo "Workspace ${WORKSPACE_NAME} exists: ${WORKSPACE_EXISTS}"
           echo "::set-output name=workspace-exists::${WORKSPACE_EXISTS}"
         env:
           WORKSPACE_NAME: ${{ steps.workspace-name.outputs.workspace-name }}
