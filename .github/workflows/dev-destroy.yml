@@ -143,8 +143,8 @@ jobs:
 
   dev-destroy:
     name: "Destroy workspace"
-    environment: dev-deploy
     runs-on: ubuntu-latest
+    environment: dev-deploy
     needs: [ dev-workspace-exists, dev-destroy-plan ]
     if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
     steps:
@@ -186,8 +186,8 @@ jobs:
 
   dev-delete:
     name: "Delete workspace"
-    environment: dev-plan
     runs-on: ubuntu-latest
+    environment: dev-plan
     needs: [ dev-workspace-exists, dev-destroy ]
     # The always() is here to make this step run even if dev-destroy is skipped
     if: always() && ${{ needs.dev-workspace-exists.outputs.dev-workspace-exists == 'true' }}
