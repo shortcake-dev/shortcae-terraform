@@ -215,6 +215,9 @@ jobs:
           # https://support.hashicorp.com/hc/en-us/articles/360043550953
           TF_WORKSPACE: ${{ needs.dev-workspace-exists.outputs.workspace-name }}
 
+      - name: "Activate workspace"
+        run: terraform workspace select ${{ needs.dev-workspace-exists.outputs.workspace-name }}
+
       - name: "Assert that destroy would do nothing"
         run: terraform plan --destroy --input=false --detailed-exitcode
         env:
