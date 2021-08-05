@@ -224,5 +224,5 @@ jobs:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
           TF_VAR_deployment_name: "pr${{ github.event.number }}"
 
-#      - name: "Delete workspace"
-#        run: terraform workspace delete ${{ needs.dev-workspace-exists.outputs.workspace-name }}
+      - name: "Delete workspace"
+        run: terraform workspace delete ${{ needs.dev-workspace-exists.outputs.workspace-name }}
