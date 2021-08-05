@@ -180,7 +180,7 @@ jobs:
           name: tfplan
 
       - name: "Terraform destroy"
-        run: terraform apply tfplan --input=false
+        run: terraform apply tfplan
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_DEPLOY_SA_KEY_JSON }}
 
