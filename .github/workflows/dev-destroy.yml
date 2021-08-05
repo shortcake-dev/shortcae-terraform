@@ -1,4 +1,4 @@
-name: dev-deploy
+name: dev-destroy
 
 on:
   pull_request:
@@ -122,7 +122,7 @@ jobs:
         run: |
           import sys
 
-          exit_code = ${{ steps.plan.outputs.exitcode }}
+          exit_code = ${{ steps.destroy-plan.outputs.exitcode }}
           print(f"Exit code = {exit_code}")
 
           if exit_code == 0:
