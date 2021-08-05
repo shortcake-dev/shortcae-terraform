@@ -146,18 +146,35 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev-deploy
     needs: [ dev-workspace-exists, dev-destroy-plan ]
-    if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
     steps:
+      # We need this job to always run (i.e. we can't use a job-level if statement) so
+      # that dev-delete can depend on it. I would like to abort from the job early, but
+      # there appears to be no way of doing this. I had to settle for adding if
+      # statements to all subsequent steps, which is kinda ugly.
+      - name: "Indicate destruction necessity"
+        shell: python
+        run: |
+          resources_to_destroy = "${{ needs.dev-destroy-plan.outputs.resources-to-destroy }}"
+
+          if resources_to_destroy == "true":
+              print("Resources to destroy. Continuing with destruction.")
+          else:
+              print("No resources to destroy. All subsequent steps will be skipped")
+
       - name: "Checkout"
+        # See note above on dev-delete job on why all these if statements are here
+        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
         uses: actions/checkout@v2
 
       - name: "Set up Terraform"
+        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
           cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
 
       - name: "Restore Terraform plugin cache"
+        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
         uses: actions/cache@v2
         with:
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
@@ -166,20 +183,24 @@ jobs:
             terraform-providers-
 
       - name: "Terraform init"
+        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
         run: terraform init --input=false
         env:
           # https://support.hashicorp.com/hc/en-us/articles/360043550953
           TF_WORKSPACE: ${{ needs.dev-workspace-exists.outputs.workspace-name }}
 
       - name: "Activate workspace"
+        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
         run: terraform workspace select ${{ needs.dev-workspace-exists.outputs.workspace-name }}
 
       - name: "Download tfplan from plan job"
+        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
         uses: actions/download-artifact@v2
         with:
           name: tfplan
 
       - name: "Terraform destroy"
+        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
         run: terraform apply --input=false tfplan
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_DEPLOY_SA_KEY_JSON }}
@@ -189,8 +210,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev-plan
     needs: [ dev-workspace-exists, dev-destroy ]
-    # The always() is here to make this step run even if dev-destroy is skipped
-    if: always() && ${{ needs.dev-workspace-exists.outputs.dev-workspace-exists == 'true' }}
+    if: ${{ needs.dev-workspace-exists.outputs.dev-workspace-exists == 'true' }}
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
