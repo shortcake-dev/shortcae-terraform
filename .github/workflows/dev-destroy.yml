@@ -4,6 +4,8 @@ on:
   pull_request:
     types: [converted_to_draft, closed]
 
+concurrency: dev-pr${{ github.event.number }}
+
 env:
   TF_IN_AUTOMATION: true
   TF_ORGANIZATION_NAME: "shortcake"
