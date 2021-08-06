@@ -4,6 +4,8 @@ on:
   pull_request:
     types: [synchronize, reopened, opened, ready_for_review]
 
+concurrency: dev-pr${{ github.event.number }}
+
 env:
   TF_IN_AUTOMATION: true
   TF_ORGANIZATION_NAME: "shortcake"
