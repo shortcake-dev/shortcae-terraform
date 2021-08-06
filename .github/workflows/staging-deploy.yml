@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/9-prevent-concurrent-runs
 
 concurrency: staging
 
