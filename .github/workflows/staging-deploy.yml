@@ -119,6 +119,7 @@ jobs:
         run: terraform plan --input=false --out=tfplan --detailed-exitcode
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GCP_STAGING_PLAN_SA_KEY_JSON }}
+          TF_VAR_release_type: "staging"
 
       - name: "Check for changes in Terraform plan"
         id: plan-has-changes
