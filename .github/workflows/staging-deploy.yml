@@ -1,0 +1,189 @@
+name: staging-deploy
+
+on:
+  push:
+    branches:
+      - main
+      - feature/9-prevent-concurrent-runs
+
+concurrency: staging
+
+env:
+  TF_IN_AUTOMATION: true
+  TF_ORGANIZATION_NAME: "shortcake"
+  TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+  TF_WORKSPACE_PREFIX: "shortcake"
+  TF_VERSION: 1.0.1
+
+jobs:
+  staging-workspace:
+    name: "Create workspace"
+    runs-on: ubuntu-latest
+    outputs:
+      workspace-name: ${{ steps.workspace-name.outputs.workspace-name }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+
+      - name: "Get workspace name"
+        id: workspace-name
+        shell: python
+        run: |
+          workspace_name = "staging"
+
+          print(f"Workspace name: {workspace_name}")
+          print(f"::set-output name=workspace-name::{workspace_name}")
+
+      - name: "Set up Terraform"
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Create plugin cache dir"
+        run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
+
+      - name: "Restore Terraform plugin cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-providers-${{ hashFiles('.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-providers-
+
+        # This needs to be done before selecting/creating workspace
+      - name: "Terraform init"
+        # This throws an error about unsupported workspaces for some reason
+        continue-on-error: true
+        run: terraform init --input=false
+
+      - name: "Create workspace if it doesn't already exist"
+        run: >
+          terraform workspace select ${{ steps.workspace-name.outputs.workspace-name }}
+          || terraform workspace new ${{ steps.workspace-name.outputs.workspace-name }}
+
+      - name: "Make sure workspace is set to local execution mode"
+        run: |
+          curl \
+            --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_TOKEN }}" \
+            --header "Content-Type: application/vnd.api+json" \
+            --request PATCH \
+            --data '{"data": {"type": "workspaces", "attributes": {"execution-mode": "local"}}}' \
+            --fail \
+            https://app.terraform.io/api/v2/organizations/${ORGANIZATION_NAME}/workspaces/${WORKSPACE_NAME}
+        env:
+          ORGANIZATION_NAME: ${{ env.TF_ORGANIZATION_NAME }}
+          WORKSPACE_NAME: "${{ env.TF_WORKSPACE_PREFIX }}-${{ steps.workspace-name.outputs.workspace-name }}"
+
+  staging-plan:
+    name: "Terraform plan"
+    runs-on: ubuntu-latest
+    environment: staging-plan
+    needs: [ staging-workspace ]
+    outputs:
+      plan-has-changes: ${{ steps.plan-has-changes.outputs.plan-has-changes }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+
+      - name: "Set up Terraform"
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Create plugin cache dir"
+        run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
+
+      - name: "Restore Terraform plugin cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-providers-${{ hashFiles('.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-providers-
+
+      - name: "Terraform init"
+        run: terraform init --input=false
+        env:
+          # https://support.hashicorp.com/hc/en-us/articles/360043550953
+          TF_WORKSPACE: ${{ needs.staging-workspace.outputs.workspace-name }}
+
+      - name: "Activate workspace"
+        run: terraform workspace select ${{ needs.staging-workspace.outputs.workspace-name }}
+
+      - name: "Terraform plan"
+        id: plan
+        # https://github.com/hashicorp/terraform/issues/29130
+        continue-on-error: true
+        run: terraform plan --input=false --out=tfplan --detailed-exitcode
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_STAGING_PLAN_SA_KEY_JSON }}
+
+      - name: "Check for changes in Terraform plan"
+        id: plan-has-changes
+        shell: python
+        run: |
+          import sys
+
+          exit_code = ${{ steps.plan.outputs.exitcode }}
+          print(f"Exit code = {exit_code}")
+
+          if exit_code == 0:
+              plan_has_changes = "false"
+          elif exit_code == 2:
+              plan_has_changes = "true"
+          else:
+              sys.exit(exit_code)
+
+          print(f"Plan has changes: {plan_has_changes}")
+          print(f"::set-output name=plan-has-changes::{plan_has_changes}")
+
+      - name: "Upload tfplan for use in deploy job"
+        uses: actions/upload-artifact@v2
+        with:
+          name: tfplan
+          path: tfplan
+
+  staging-deploy:
+    name: "Deploy"
+    environment: staging-deploy
+    runs-on: ubuntu-latest
+    needs: [ staging-workspace, staging-plan ]
+    if: ${{ needs.staging-plan.outputs.plan-has-changes == 'true' }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+
+      - name: "Set up Terraform"
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+
+      - name: "Restore Terraform plugin cache"
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: terraform-providers-${{ hashFiles('.terraform.lock.hcl') }}
+          restore-keys: |
+            terraform-providers-
+
+      - name: "Terraform init"
+        run: terraform init --input=false
+        env:
+          # https://support.hashicorp.com/hc/en-us/articles/360043550953
+          TF_WORKSPACE: ${{ needs.staging-workspace.outputs.workspace-name }}
+
+      - name: "Activate workspace"
+        run: terraform workspace select ${{ needs.staging-workspace.outputs.workspace-name }}
+
+      - name: "Download tfplan from plan job"
+        uses: actions/download-artifact@v2
+        with:
+          name: tfplan
+
+      - name: "Terraform apply"
+        run: terraform apply --input=false tfplan
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_STAGING_DEPLOY_SA_KEY_JSON }}

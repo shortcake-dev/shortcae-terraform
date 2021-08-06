@@ -3,7 +3,7 @@ locals {
 
   project_id = {
     dev     = "${local.project_name}-dev"
-    staging = "${local.project_name}-staging"
+    staging = "${local.project_name}-staging-322119"
     prod    = "${local.project_name}-prod"
   }[var.release_type]
 
