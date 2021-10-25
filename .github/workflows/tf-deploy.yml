@@ -8,6 +8,15 @@ on:
         type: string
         default: "release"
         required: false
+    secrets:
+      terraform_org_token:
+        required: true
+      terraform_team_token:
+        required: true
+      google_cloud_plan_token:
+        required: true
+      google_cloud_deploy_token:
+        required: true
 
 # TODO: Currently unsupported by GitHub Actions
 #concurrency: ${{ inputs.release_type }}-${{ inputs.release_name }}
@@ -43,7 +52,7 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.terraform_team_token }}
 
       - name: "Create plugin cache dir"
         run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
@@ -70,7 +79,7 @@ jobs:
       - name: "Make sure workspace is set to local execution mode"
         run: |
           curl \
-            --header "Authorization: Bearer ${{ secrets.TERRAFORM_CLOUD_ORG_TOKEN }}" \
+            --header "Authorization: Bearer ${{ secrets.terraform_org_token }}" \
             --header "Content-Type: application/vnd.api+json" \
             --request PATCH \
             --data '{"data": {"type": "workspaces", "attributes": {"execution-mode": "local"}}}' \
@@ -83,7 +92,6 @@ jobs:
   tf-plan:
     name: "Terraform plan"
     runs-on: ubuntu-latest
-    environment: tf-${{ inputs.release_type }}
     needs: [ tf-workspace ]
     outputs:
       plan-has-changes: ${{ steps.plan-has-changes.outputs.plan-has-changes }}
@@ -95,7 +103,7 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.terraform_team_token }}
 
       - name: "Create plugin cache dir"
         run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
@@ -123,7 +131,7 @@ jobs:
         continue-on-error: true
         run: terraform plan --input=false --out=tfplan --detailed-exitcode
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_PLAN_SA_KEY_JSON }}
+          GOOGLE_CREDENTIALS: ${{ secrets.google_cloud_plan_token }}
           TF_VAR_deployment_name: ${{ inputs.release_name }}
 
       - name: "Check for changes in Terraform plan"
@@ -153,7 +161,6 @@ jobs:
 
   deploy:
     name: "Deploy"
-    environment: tf-${{ inputs.release_type }}
     runs-on: ubuntu-latest
     needs: [ tf-workspace, tf-plan ]
     if: ${{ needs.tf-plan.outputs.plan-has-changes == 'true' }}
@@ -165,7 +172,7 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.terraform_team_token }}
 
       - name: "Restore Terraform plugin cache"
         uses: actions/cache@v2
@@ -192,4 +199,4 @@ jobs:
       - name: "Terraform apply"
         run: terraform apply --input=false tfplan
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON }}
+          GOOGLE_CREDENTIALS: ${{ secrets.google_cloud_deploy_token }}
