@@ -7,7 +7,7 @@ on:
 
 jobs:
   infra-staging-deploy:
-    uses: shortcake-dev/shortcake/.github/workflows/tf-deploy.yml@${{ github.sha }}
+    uses: shortcake-dev/shortcake/.github/workflows/tf-deploy.yml@main
     with:
       release_type: "staging"
       release_name: "infra"
