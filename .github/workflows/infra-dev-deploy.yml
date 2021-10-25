@@ -1,0 +1,12 @@
+name: infra-dev-deploy
+
+on:
+  pull_request:
+    types: [synchronize, reopened, opened, ready_for_review]
+
+jobs:
+  infra-dev-deploy:
+    uses: shortcake-dev/shortcake/.github/workflows/tf-deploy.yml@${{ github.sha }}
+    with:
+      release_type: "dev"
+      release_name: "infra-pr${{ github.event.number }}"

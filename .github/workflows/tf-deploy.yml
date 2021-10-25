@@ -1,10 +1,15 @@
-name: dev-deploy
-
 on:
-  pull_request:
-    types: [synchronize, reopened, opened, ready_for_review]
+  workflow_call:
+    inputs:
+      release_type:
+        type: string
+        required: true
+      release_name:
+        type: string
+        default: "release"
+        required: false
 
-concurrency: dev-pr${{ github.event.number }}
+concurrency: ${{ inputs.release_type }}-${{ inputs.release_name }}
 
 env:
   TF_IN_AUTOMATION: true
@@ -14,7 +19,7 @@ env:
   TF_VERSION: 1.0.1
 
 jobs:
-  dev-workspace:
+  tf-workspace:
     name: "Create workspace"
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.draft == false }}
@@ -28,8 +33,7 @@ jobs:
         id: workspace-name
         shell: python
         run: |
-          pr_number = "${{ github.event.number }}"
-          workspace_name = f"dev-pr{pr_number}"
+          workspace_name = "${{ inputs.release_type }}-${{ inputs.release_name }}"
 
           print(f"Workspace name: {workspace_name}")
           print(f"::set-output name=workspace-name::{workspace_name}")
@@ -75,11 +79,11 @@ jobs:
           ORGANIZATION_NAME: ${{ env.TF_ORGANIZATION_NAME }}
           WORKSPACE_NAME: "${{ env.TF_WORKSPACE_PREFIX }}-${{ steps.workspace-name.outputs.workspace-name }}"
 
-  dev-plan:
+  tf-plan:
     name: "Terraform plan"
     runs-on: ubuntu-latest
-    environment: dev-plan
-    needs: [ dev-workspace ]
+    environment: tf-${{ inputs.release_type }}
+    needs: [ tf-workspace ]
     outputs:
       plan-has-changes: ${{ steps.plan-has-changes.outputs.plan-has-changes }}
     steps:
@@ -107,10 +111,10 @@ jobs:
         run: terraform init --input=false
         env:
           # https://support.hashicorp.com/hc/en-us/articles/360043550953
-          TF_WORKSPACE: ${{ needs.dev-workspace.outputs.workspace-name }}
+          TF_WORKSPACE: ${{ needs.tf-workspace.outputs.workspace-name }}
 
       - name: "Activate workspace"
-        run: terraform workspace select ${{ needs.dev-workspace.outputs.workspace-name }}
+        run: terraform workspace select ${{ needs.tf-workspace.outputs.workspace-name }}
 
       - name: "Terraform plan"
         id: plan
@@ -118,8 +122,8 @@ jobs:
         continue-on-error: true
         run: terraform plan --input=false --out=tfplan --detailed-exitcode
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
-          TF_VAR_deployment_name: "pr${{ github.event.number }}"
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_PLAN_SA_KEY_JSON }}
+          TF_VAR_deployment_name: ${{ inputs.release_name }}
 
       - name: "Check for changes in Terraform plan"
         id: plan-has-changes
@@ -146,12 +150,12 @@ jobs:
           name: tfplan
           path: tfplan
 
-  dev-deploy:
+  deploy:
     name: "Deploy"
-    environment: dev-deploy
+    environment: tf-${{ inputs.release_type }}
     runs-on: ubuntu-latest
-    needs: [ dev-workspace, dev-plan ]
-    if: ${{ needs.dev-plan.outputs.plan-has-changes == 'true' }}
+    needs: [ tf-workspace, tf-plan ]
+    if: ${{ needs.tf-plan.outputs.plan-has-changes == 'true' }}
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -174,10 +178,10 @@ jobs:
         run: terraform init --input=false
         env:
           # https://support.hashicorp.com/hc/en-us/articles/360043550953
-          TF_WORKSPACE: ${{ needs.dev-workspace.outputs.workspace-name }}
+          TF_WORKSPACE: ${{ needs.tf-workspace.outputs.workspace-name }}
 
       - name: "Activate workspace"
-        run: terraform workspace select ${{ needs.dev-workspace.outputs.workspace-name }}
+        run: terraform workspace select ${{ needs.tf-workspace.outputs.workspace-name }}
 
       - name: "Download tfplan from plan job"
         uses: actions/download-artifact@v2
@@ -187,4 +191,4 @@ jobs:
       - name: "Terraform apply"
         run: terraform apply --input=false tfplan
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_DEPLOY_SA_KEY_JSON }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON }}

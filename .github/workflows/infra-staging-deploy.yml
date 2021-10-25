@@ -1,0 +1,13 @@
+name: infra-staging-deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  infra-staging-deploy:
+    uses: shortcake-dev/shortcake/.github/workflows/tf-deploy.yml@${{ github.sha }}
+    with:
+      release_type: "staging"
+      release_name: "infra"

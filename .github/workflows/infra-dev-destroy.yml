@@ -1,0 +1,13 @@
+name: infra-dev-destroy
+
+on:
+  pull_request:
+    types: [converted_to_draft, closed]
+
+jobs:
+  infra-dev-deploy:
+    uses: shortcake-dev/shortcake/.github/workflows/tf-destroy.yml@${{ github.sha }}
+    with:
+      release_type: "dev"
+      release_name: "infra-pr${{ github.event.number }}"
+
