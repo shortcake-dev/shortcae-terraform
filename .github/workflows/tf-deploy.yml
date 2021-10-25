@@ -9,7 +9,8 @@ on:
         default: "release"
         required: false
 
-concurrency: ${{ inputs.release_type }}-${{ inputs.release_name }}
+# TODO: Currently unsupported by GitHub Actions
+#concurrency: ${{ inputs.release_type }}-${{ inputs.release_name }}
 
 env:
   TF_IN_AUTOMATION: true
