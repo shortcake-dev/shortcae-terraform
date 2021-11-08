@@ -7,7 +7,7 @@ on:
 jobs:
   infra-dev-destroy:
     # environment: tf-dev
-    uses: shortcake-dev/shortcake-terraform/.github/workflows/tf-destroy.yml@d2c2d50fe8b306cdc1b852d02a5836e65ce1f742
+    uses: shortcake-dev/shortcake-terraform/.github/workflows/tf-destroy.yml@main
     with:
       release_type: "dev"
       release_name: "infra-pr${{ github.event.number }}"
