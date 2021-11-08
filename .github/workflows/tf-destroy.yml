@@ -1,10 +1,25 @@
-name: dev-destroy
+name: tf-destroy
 
 on:
-  pull_request:
-    types: [converted_to_draft, closed]
+  workflow_call:
+    inputs:
+      release_type:
+        type: string
+        required: true
+      release_name:
+        type: string
+        default: "release"
+        required: false
+    secrets:
+      terraform_team_token:
+        required: true
+      google_cloud_plan_token:
+        required: true
+      google_cloud_deploy_token:
+        required: true
 
-concurrency: dev-pr${{ github.event.number }}
+# TODO: Currently unsupported by GitHub Actions
+#concurrency: ${{ inputs.release_type }}-${{ inputs.release_name }}
 
 env:
   TF_IN_AUTOMATION: true
@@ -14,7 +29,7 @@ env:
   TF_VERSION: 1.0.1
 
 jobs:
-  dev-workspace-exists:
+  tf-workspace-exists:
     name: "Check if workspace exists"
     runs-on: ubuntu-latest
     outputs:
@@ -28,8 +43,7 @@ jobs:
         id: workspace-name
         shell: python
         run: |
-          pr_number = "${{ github.event.number }}"
-          workspace_name = f"dev-pr{pr_number}"
+          workspace_name = "${{ inputs.release_type }}-${{ inputs.release_name }}"
 
           print(f"Workspace name: {workspace_name}")
           print(f"::set-output name=workspace-name::{workspace_name}")
@@ -38,7 +52,7 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.terraform_team_token }}
 
       - name: "Create plugin cache dir"
         run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
@@ -71,12 +85,12 @@ jobs:
         env:
           WORKSPACE_NAME: ${{ steps.workspace-name.outputs.workspace-name }}
 
-  dev-destroy-plan:
+  tf-destroy-plan:
     name: "Plan workspace destroy"
     runs-on: ubuntu-latest
-    environment: dev-plan
-    needs: [ dev-workspace-exists ]
-    if: ${{ needs.dev-workspace-exists.outputs.workspace-exists == 'true' }}
+    environment: tf-${{ inputs.release_type }}
+    needs: [ tf-workspace-exists ]
+    if: ${{ needs.tf-workspace-exists.outputs.workspace-exists == 'true' }}
     outputs:
       resources-to-destroy: ${{ steps.resources-to-destroy.outputs.resources-to-destroy }}
     steps:
@@ -87,7 +101,7 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.terraform_team_token }}
 
       - name: "Create plugin cache dir"
         run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
@@ -104,10 +118,10 @@ jobs:
         run: terraform init --input=false
         env:
           # https://support.hashicorp.com/hc/en-us/articles/360043550953
-          TF_WORKSPACE: ${{ needs.dev-workspace-exists.outputs.workspace-name }}
+          TF_WORKSPACE: ${{ needs.tf-workspace-exists.outputs.workspace-name }}
 
       - name: "Activate workspace"
-        run: terraform workspace select ${{ needs.dev-workspace-exists.outputs.workspace-name }}
+        run: terraform workspace select ${{ needs.tf-workspace-exists.outputs.workspace-name }}
 
       - name: "Terraform plan"
         id: destroy-plan
@@ -115,8 +129,9 @@ jobs:
         continue-on-error: true
         run: terraform plan --destroy --input=false --out=tfplan --detailed-exitcode
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_PLAN_SA_KEY_JSON }}
-          TF_VAR_deployment_name: "pr${{ github.event.number }}"
+          GOOGLE_CREDENTIALS: ${{ secrets.google_cloud_plan_token }}
+          TF_VAR_deployment_name: ${{ inputs.release_name }}
+          TF_VAR_release_type: ${{ inputs.release_type }}
 
       - name: "Check for changes in Terraform plan"
         id: resources-to-destroy
@@ -143,20 +158,20 @@ jobs:
           name: tfplan
           path: tfplan
 
-  dev-destroy:
+  tf-destroy:
     name: "Destroy workspace"
     runs-on: ubuntu-latest
-    environment: dev-deploy
-    needs: [ dev-workspace-exists, dev-destroy-plan ]
+    environment: tf-${{ inputs.release_type }}
+    needs: [ tf-workspace-exists, tf-destroy-plan ]
     steps:
       # We need this job to always run (i.e. we can't use a job-level if statement) so
-      # that dev-delete can depend on it. I would like to abort from the job early, but
+      # that tf-delete can depend on it. I would like to abort from the job early, but
       # there appears to be no way of doing this. I had to settle for adding if
       # statements to all subsequent steps, which is kinda ugly.
       - name: "Indicate destruction necessity"
         shell: python
         run: |
-          resources_to_destroy = "${{ needs.dev-destroy-plan.outputs.resources-to-destroy }}"
+          resources_to_destroy = "${{ needs.tf-destroy-plan.outputs.resources-to-destroy }}"
 
           if resources_to_destroy == "true":
               print("Resources to destroy. Continuing with destruction.")
@@ -164,19 +179,19 @@ jobs:
               print("No resources to destroy. All subsequent steps will be skipped")
 
       - name: "Checkout"
-        # See note above on dev-delete job on why all these if statements are here
-        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
+        # See note above on tf-delete job on why all these if statements are here
+        if: ${{ needs.tf-destroy-plan.outputs.resources-to-destroy == 'true' }}
         uses: actions/checkout@v2
 
       - name: "Set up Terraform"
-        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
+        if: ${{ needs.tf-destroy-plan.outputs.resources-to-destroy == 'true' }}
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.terraform_team_token }}
 
       - name: "Restore Terraform plugin cache"
-        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
+        if: ${{ needs.tf-destroy-plan.outputs.resources-to-destroy == 'true' }}
         uses: actions/cache@v2
         with:
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
@@ -185,34 +200,34 @@ jobs:
             terraform-providers-
 
       - name: "Terraform init"
-        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
+        if: ${{ needs.tf-destroy-plan.outputs.resources-to-destroy == 'true' }}
         run: terraform init --input=false
         env:
           # https://support.hashicorp.com/hc/en-us/articles/360043550953
-          TF_WORKSPACE: ${{ needs.dev-workspace-exists.outputs.workspace-name }}
+          TF_WORKSPACE: ${{ needs.tf-workspace-exists.outputs.workspace-name }}
 
       - name: "Activate workspace"
-        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
-        run: terraform workspace select ${{ needs.dev-workspace-exists.outputs.workspace-name }}
+        if: ${{ needs.tf-destroy-plan.outputs.resources-to-destroy == 'true' }}
+        run: terraform workspace select ${{ needs.tf-workspace-exists.outputs.workspace-name }}
 
       - name: "Download tfplan from plan job"
-        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
+        if: ${{ needs.tf-destroy-plan.outputs.resources-to-destroy == 'true' }}
         uses: actions/download-artifact@v2
         with:
           name: tfplan
 
       - name: "Terraform destroy"
-        if: ${{ needs.dev-destroy-plan.outputs.resources-to-destroy == 'true' }}
+        if: ${{ needs.tf-destroy-plan.outputs.resources-to-destroy == 'true' }}
         run: terraform apply --input=false tfplan
         env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GCP_DEV_DEPLOY_SA_KEY_JSON }}
+          GOOGLE_CREDENTIALS: ${{ secrets.google_cloud_deploy_token }}
 
-  dev-delete:
+  tf-delete:
     name: "Delete workspace"
     runs-on: ubuntu-latest
-    environment: dev-plan
-    needs: [ dev-workspace-exists, dev-destroy ]
-    if: ${{ needs.dev-workspace-exists.outputs.workspace-exists == 'true' }}
+    environment: tf-${{ inputs.release_type }}
+    needs: [ tf-workspace-exists, tf-destroy ]
+    if: ${{ needs.tf-workspace-exists.outputs.workspace-exists == 'true' }}
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -221,7 +236,7 @@ jobs:
         uses: hashicorp/setup-terraform@v1
         with:
           terraform_version: ${{ env.TF_VERSION }}
-          cli_config_credentials_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.terraform_team_token }}
 
       - name: "Restore Terraform plugin cache"
         uses: actions/cache@v2
@@ -235,7 +250,7 @@ jobs:
         run: terraform init --input=false
         env:
           # https://support.hashicorp.com/hc/en-us/articles/360043550953
-          TF_WORKSPACE: ${{ needs.dev-workspace-exists.outputs.workspace-name }}
+          TF_WORKSPACE: ${{ needs.tf-workspace-exists.outputs.workspace-name }}
 
       - name: "Delete workspace"
-        run: terraform workspace delete ${{ needs.dev-workspace-exists.outputs.workspace-name }}
+        run: terraform workspace delete ${{ needs.tf-workspace-exists.outputs.workspace-name }}

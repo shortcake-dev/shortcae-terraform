@@ -1,6 +1,5 @@
 variable "release_type" {
   type    = string
-  default = "dev"
 }
 
 variable "deployment_name" {
