@@ -5,23 +5,24 @@ locals {
   google_registry  = "${local.google_subdomain}.pkg.dev/${var.project}/${var.docker_registry.repository_id}"
 
   dockerhub_registry = "registry.hub.docker.com/${var.dockerhub_repo}"
+
+  dockerhub_image = "${local.dockerhub_registry}/${complete_image_name}"
+  google_image    = "${local.google_registry}/${complete_image_name}"
 }
 
 resource "null_resource" "docker_image" {
-  dockerhub_image = "${local.dockerhub_registry}/${complete_image_name}"
-  google_image    = "${local.google_registry}/${complete_image_name}"
 
   provisioner "local-exec" {
     command = <<-EOT
-      docker pull ${self.dockerhub_image}
-      docker tag ${self.dockerhub_image} ${self.google_image}
-      docker push ${self.google_image}
+      docker pull ${local.dockerhub_image}
+      docker tag ${local.dockerhub_image} ${local.google_image}
+      docker push ${local.google_image}
     EOT
   }
 
   provisioner "local-exec" {
     when    = destroy
-    command = "gcloud artifacts docker images delete ${self.google_image}"
+    command = "gcloud artifacts docker images delete ${local.google_image}"
   }
 }
 
