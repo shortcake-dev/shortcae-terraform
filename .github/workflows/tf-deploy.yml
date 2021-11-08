@@ -133,6 +133,7 @@ jobs:
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.google_cloud_plan_token }}
           TF_VAR_deployment_name: ${{ inputs.release_name }}
+          TF_VAR_release_type: ${{ inputs.release_type }}
 
       - name: "Check for changes in Terraform plan"
         id: plan-has-changes
