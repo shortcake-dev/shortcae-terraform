@@ -11,6 +11,7 @@ jobs:
     with:
       release_type: "dev"
       release_name: "infra-pr${{ github.event.number }}"
+    secrets:
       terraform_org_token: ${{ secrets.TERRAFORM_CLOUD_ORG_TOKEN }}
       terraform_team_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
       # google_cloud_plan_token: ${{ secrets.GCP_PLAN_SA_KEY_JSON }}
