@@ -10,8 +10,8 @@ locals {
 resource "null_resource" "docker_image" {
   triggers = {
     # https://github.com/hashicorp/terraform/issues/23679
-    dockerhub_image = "${local.dockerhub_registry}/${complete_image_name}"
-    google_image    = "${local.google_registry}/${complete_image_name}"
+    dockerhub_image = "${local.dockerhub_registry}/${local.complete_image_name}"
+    google_image    = "${local.google_registry}/${local.complete_image_name}"
   }
 
   provisioner "local-exec" {
