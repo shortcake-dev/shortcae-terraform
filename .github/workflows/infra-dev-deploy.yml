@@ -7,7 +7,7 @@ on:
 jobs:
   infra-dev-deploy:
     # environment: tf-dev
-    uses: shortcake-dev/shortcake-terraform/.github/workflows/tf-deploy.yml@main
+    uses: shortcake-dev/shortcake-terraform/.github/workflows/tf-deploy.yml@e884fa5c85b75143a30c774acab6db7ec7242f32
     with:
       release_type: "dev"
       release_name: "infra-pr${{ github.event.number }}"
