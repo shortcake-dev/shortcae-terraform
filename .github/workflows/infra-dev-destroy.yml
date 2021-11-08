@@ -6,11 +6,13 @@ on:
 
 jobs:
   infra-dev-deploy:
-    environment: tf-dev
+    # environment: tf-dev
     uses: shortcake-dev/shortcake-terraform/.github/workflows/tf-destroy.yml@341c1417817093d7370e140117c47df72f1d06a7
     with:
       release_type: "dev"
       release_name: "infra-pr${{ github.event.number }}"
       terraform_team_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
-      google_cloud_plan_token: ${{ secrets.GCP_PLAN_SA_KEY_JSON }}
-      google_cloud_deploy_token: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON }}
+      # google_cloud_plan_token: ${{ secrets.GCP_PLAN_SA_KEY_JSON }}
+      # google_cloud_deploy_token: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON }}
+      google_cloud_plan_token: ${{ secrets.GCP_PLAN_SA_KEY_JSON__STAGING }}
+      google_cloud_deploy_token: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON__STAGING }}
