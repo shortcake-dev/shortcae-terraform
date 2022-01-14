@@ -1,0 +1,32 @@
+name: request-dev-deploy
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Type of release to perform. Must be one of [dev, staging, prod].
+          If using 'staging' or 'prod', versions should not be provided for any subsystem."
+        required: true
+      release_name:
+        description: "Name/tag of the release"
+        required: true
+      backend_version:
+        description: "Backend version"
+        required: false
+        default: "latest"
+
+jobs:
+  request-deploy:
+    # environment: tf-dev
+    uses: shortcake-dev/shortcake-terraform/.github/workflows/tf-deploy.yml@e884fa5c85b75143a30c774acab6db7ec7242f32
+    with:
+      release_type: ${{ github.event.inputs.release_name }}
+      release_name: ${{ github.event.inputs.release_name }}
+      backend_version: ${{ github.event.inputs.backend_version }}
+    secrets:
+      terraform_org_token: ${{ secrets.TERRAFORM_CLOUD_ORG_TOKEN }}
+      terraform_team_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
+      # google_cloud_plan_token: ${{ secrets.GCP_PLAN_SA_KEY_JSON }}
+      # google_cloud_deploy_token: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON }}
+      google_cloud_plan_token: ${{ secrets.GCP_PLAN_SA_KEY_JSON__DEV }}
+      google_cloud_deploy_token: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON__DEV }}
+
