@@ -30,6 +30,8 @@ resource "null_resource" "docker_image" {
     command = <<-EOT
       docker pull ${self.triggers.dockerhub_image}
       docker tag ${self.triggers.dockerhub_image} ${self.triggers.google_image}
+
+      gcloud auth login
       docker push ${self.triggers.google_image}
     EOT
   }
@@ -37,6 +39,7 @@ resource "null_resource" "docker_image" {
   provisioner "local-exec" {
     when    = destroy
     command = <<-EOT
+      gcloud auth login
       gcloud artifacts docker images delete ${self.triggers.google_image}
     EOT
   }
