@@ -2,7 +2,8 @@ locals {
   complete_image_name = "${var.image_name}:${var.image_tag}"
 
   google_subdomain = "${var.docker_registry.location}-docker"
-  google_registry  = "${local.google_subdomain}.pkg.dev/${var.project}/${var.docker_registry.repository_id}"
+  google_domain = "${local.google_subdomain}.pkg.dev"
+  google_registry  = "${local.google_domain}/${var.project}/${var.docker_registry.repository_id}"
 
   dockerhub_registry = "registry.hub.docker.com/${var.dockerhub_repo}"
 }
@@ -14,7 +15,8 @@ module "gcloud" {
   platform = "linux"
 
   create_cmd_entrypoint  = "gcloud"
-  create_cmd_body        = "auth configure-docker"
+  # https://github.com/pulumi/actions/issues/28#issuecomment-664799629
+  create_cmd_body        = "auth configure-docker ${local.google_domain}"
 }
 
 resource "null_resource" "docker_image" {
@@ -28,8 +30,6 @@ resource "null_resource" "docker_image" {
     command = <<-EOT
       docker pull ${self.triggers.dockerhub_image}
       docker tag ${self.triggers.dockerhub_image} ${self.triggers.google_image}
-
-      docker login
       docker push ${self.triggers.google_image}
     EOT
   }
@@ -37,7 +37,6 @@ resource "null_resource" "docker_image" {
   provisioner "local-exec" {
     when    = destroy
     command = <<-EOT
-      docker login
       gcloud artifacts docker images delete ${self.triggers.google_image}
     EOT
   }
