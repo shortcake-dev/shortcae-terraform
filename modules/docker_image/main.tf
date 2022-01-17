@@ -28,6 +28,8 @@ resource "null_resource" "docker_image" {
     command = <<-EOT
       docker pull ${self.triggers.dockerhub_image}
       docker tag ${self.triggers.dockerhub_image} ${self.triggers.google_image}
+
+      docker login
       docker push ${self.triggers.google_image}
     EOT
   }
