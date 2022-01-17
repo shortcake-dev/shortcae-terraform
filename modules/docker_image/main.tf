@@ -7,6 +7,16 @@ locals {
   dockerhub_registry = "registry.hub.docker.com/${var.dockerhub_repo}"
 }
 
+module "gcloud" {
+  source  = "terraform-google-modules/gcloud/google"
+  version = "~> 3.0"
+
+  platform = "linux"
+
+  create_cmd_entrypoint  = "gcloud"
+  create_cmd_body        = "auth configure-docker"
+}
+
 resource "null_resource" "docker_image" {
   triggers = {
     # https://github.com/hashicorp/terraform/issues/23679
@@ -24,7 +34,12 @@ resource "null_resource" "docker_image" {
 
   provisioner "local-exec" {
     when    = destroy
-    command = "gcloud artifacts docker images delete ${self.triggers.google_image}"
+    command = <<-EOT
+      docker login
+      gcloud artifacts docker images delete ${self.triggers.google_image}
+    EOT
   }
+
+  depends_on = [module.gcloud.wait]
 }
 
