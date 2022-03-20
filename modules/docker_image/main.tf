@@ -1,49 +1,45 @@
+terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 2.16.0"
+    }
+  }
+  required_version = ">= 0.14"
+}
+
 locals {
   complete_image_name = "${var.image_name}:${var.image_tag}"
 
   google_subdomain = "${var.docker_registry.location}-docker"
-  google_domain = "${local.google_subdomain}.pkg.dev"
+  google_domain    = "${local.google_subdomain}.pkg.dev"
   google_registry  = "${local.google_domain}/${var.project}/${var.docker_registry.repository_id}"
 
   dockerhub_registry = "registry.hub.docker.com/${var.dockerhub_repo}"
 }
 
-module "gcloud" {
-  source  = "terraform-google-modules/gcloud/google"
-  version = "~> 3.0"
-
-  platform = "linux"
-
-  create_cmd_entrypoint  = "gcloud"
-  # https://github.com/pulumi/actions/issues/28#issuecomment-664799629
-  create_cmd_body        = "auth configure-docker ${local.google_domain}"
+resource "google_service_account" "artifact_registry_image_sa" {
+  account_id   = "terraform-artifact-registry-sa"
+  display_name = "terraform-artifact-registry-sa"
 }
 
-resource "null_resource" "docker_image" {
-  triggers = {
-    # https://github.com/hashicorp/terraform/issues/23679
-    dockerhub_image = "${local.dockerhub_registry}/${local.complete_image_name}"
-    google_image    = "${local.google_registry}/${local.complete_image_name}"
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      docker pull ${self.triggers.dockerhub_image}
-      docker tag ${self.triggers.dockerhub_image} ${self.triggers.google_image}
-
-      gcloud auth login
-      docker push ${self.triggers.google_image}
-    EOT
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<-EOT
-      gcloud auth login
-      gcloud artifacts docker images delete ${self.triggers.google_image}
-    EOT
-  }
-
-  depends_on = [module.gcloud.wait]
+resource "google_project_iam_member" "artifact_registry_image_sa" {
+  project = var.project
+  role    = "roles/artifactregistry.repoAdmin"
+  members = [
+    "serviceAccount:${google_service_account.artifact_registry_image_sa.email}"
+  ]
 }
 
+data "google_service_account_access_token" "artifact_registry_image_sa_token" {
+  target_service_account = google_service_account.artifact_registry_image_sa
+  scopes                 = ["cloud-platform"]
+}
+
+provider "docker" {
+  registry_auth {
+    address  = local.google_domain
+    username = "oauth2accesstoken"
+    password = data.google_service_account_access_token.artifact_registry_image_sa_token.access_token
+  }
+}
