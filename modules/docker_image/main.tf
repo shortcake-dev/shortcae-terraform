@@ -42,15 +42,15 @@ provider "docker" {
   }
 }
 
-data "docker_registry_image" "ghcr_image" {
+data "docker_registry_image" "ghcr_image_pull" {
   name = "${local.ghcr_registry}/${local.complete_image_name}"
 }
 
 resource "docker_image" "ghcr_image" {
-  name          = data.docker_registry_image.ghcr_image.name
-  pull_triggers = [data.docker_registry_image.ghcr_image.sha256_digest]
+  name          = data.docker_registry_image.ghcr_image_pull.name
+  pull_triggers = [data.docker_registry_image.ghcr_image_pull.sha256_digest]
 }
 
-data "docker_registry_image" "gar_image" {
+resource "docker_registry_image" "gar_image_push" {
   name = "${local.google_registry}/${local.complete_image_name}"
 }
