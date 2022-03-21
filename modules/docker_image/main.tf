@@ -30,7 +30,7 @@ resource "google_project_iam_member" "artifact_registry_image_sa" {
 }
 
 data "google_service_account_access_token" "artifact_registry_image_sa_token" {
-  target_service_account = google_service_account.artifact_registry_image_sa
+  target_service_account = google_service_account.artifact_registry_image_sa.email
   scopes                 = ["cloud-platform"]
 }
 
