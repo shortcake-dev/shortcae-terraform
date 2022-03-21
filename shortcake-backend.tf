@@ -23,15 +23,15 @@ module "docker_image" {
   image_tag       = var.backend_version
 }
 
-module "cloud_run" {
-  source = "./modules/cloud_run"
-
-  service_name = local.deployment_name
-  region       = local.region
-  image        = module.docker_image.image
-
-  sql_instance = module.database.database
-}
+#module "cloud_run" {
+#  source = "./modules/cloud_run"
+#
+#  service_name = local.deployment_name
+#  region       = local.region
+#  image        = module.docker_image.image
+#
+#  sql_instance = module.database.database
+#}
 
 module "database" {
   source = "./modules/database"
