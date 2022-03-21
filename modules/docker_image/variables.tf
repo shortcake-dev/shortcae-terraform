@@ -9,8 +9,7 @@ variable "ghcr_repo" {
 variable "docker_registry" {
   type = object({
     location      = string
-    name          = string
-    repository_id = string  # TODO: Use just name/id?
+    repository_id = string
   })
 }
 
