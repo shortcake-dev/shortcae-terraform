@@ -29,15 +29,15 @@ resource "google_project_iam_member" "artifact_registry_image_sa" {
   member = "serviceAccount:${google_service_account.artifact_registry_image_sa.email}"
 }
 
-data "google_service_account_access_token" "artifact_registry_image_sa_token" {
-  target_service_account = google_service_account.artifact_registry_image_sa.email
-  scopes                 = ["cloud-platform"]
-}
-
-provider "docker" {
-  registry_auth {
-    address  = local.google_domain
-    username = "oauth2accesstoken"
-    password = data.google_service_account_access_token.artifact_registry_image_sa_token.access_token
-  }
-}
+#data "google_service_account_access_token" "artifact_registry_image_sa_token" {
+#  target_service_account = google_service_account.artifact_registry_image_sa.email
+#  scopes                 = ["cloud-platform"]
+#}
+#
+#provider "docker" {
+#  registry_auth {
+#    address  = local.google_domain
+#    username = "oauth2accesstoken"
+#    password = data.google_service_account_access_token.artifact_registry_image_sa_token.access_token
+#  }
+#}
