@@ -8,6 +8,10 @@ on:
         type: string
         default: "release"
         required: false
+      backend_version:
+        type: string
+        default: "latest"
+        required: false
     secrets:
       terraform_org_token:
         required: true
@@ -132,6 +136,7 @@ jobs:
         run: terraform plan --input=false --out=tfplan --detailed-exitcode
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.google_cloud_plan_token }}
+          TF_VAR_backend_version: ${{ inputs.backend_version }}
           TF_VAR_deployment_name: ${{ inputs.release_name }}
           TF_VAR_release_type: ${{ inputs.release_type }}
 

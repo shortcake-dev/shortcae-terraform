@@ -11,15 +11,27 @@ module "docker_registry" {
   repository_id = local.deployment_name
 }
 
-module "cloud_run" {
-  source = "./modules/cloud_run"
+module "docker_image" {
+  source = "./modules/docker_image"
 
-  service_name = local.deployment_name
-  region       = local.region
-  image        = "us-docker.pkg.dev/cloudrun/container/hello"
+  project = local.project_id
 
-  sql_instance = module.database.database
+  ghcr_repo = local.ghcr_repo
+
+  docker_registry = module.docker_registry.docker_registry
+  image_name      = local.project_name
+  image_tag       = var.backend_version
 }
+
+#module "cloud_run" {
+#  source = "./modules/cloud_run"
+#
+#  service_name = local.deployment_name
+#  region       = local.region
+#  image        = module.docker_image.image
+#
+#  sql_instance = module.database.database
+#}
 
 module "database" {
   source = "./modules/database"

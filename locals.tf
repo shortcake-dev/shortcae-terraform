@@ -9,8 +9,10 @@ locals {
 
   deployment_name = join(
     "-",
-    compact([local.project_name, var.release_type, var.deployment_name])
+    [local.project_name, var.release_type, var.deployment_name]
   )
 
   region = "us-west1"
+
+  ghcr_repo = "shortcake-dev"
 }

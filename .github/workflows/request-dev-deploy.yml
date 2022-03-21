@@ -1,16 +1,22 @@
-name: infra-dev-deploy
-
+name: request-dev-deploy
 on:
-  pull_request:
-    types: [synchronize, reopened, opened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: "Name/tag of the release"
+        required: true
+      backend_version:
+        description: "Backend version"
+        required: false
+        default: "latest"
 
 jobs:
-  infra-dev-deploy:
+  request-deploy:
     # environment: tf-dev
     uses: ./.github/workflows/tf-deploy.yml
     with:
-      release_type: "dev"
-      release_name: "infra-pr${{ github.event.number }}"
+      release_name: ${{ github.event.inputs.release_name }}
+      backend_version: ${{ github.event.inputs.backend_version }}
     secrets:
       terraform_org_token: ${{ secrets.TERRAFORM_CLOUD_ORG_TOKEN }}
       terraform_team_token: ${{ secrets.TERRAFORM_CLOUD_TEAM_TOKEN }}
@@ -18,3 +24,4 @@ jobs:
       # google_cloud_deploy_token: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON }}
       google_cloud_plan_token: ${{ secrets.GCP_PLAN_SA_KEY_JSON__DEV }}
       google_cloud_deploy_token: ${{ secrets.GCP_DEPLOY_SA_KEY_JSON__DEV }}
+
