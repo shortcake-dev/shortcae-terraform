@@ -16,7 +16,7 @@ module "docker_image" {
 
   project = local.project_id
 
-  dockerhub_repo = local.dockerhub_repo
+  ghcr_repo = local.ghcr_repo
 
   docker_registry = module.docker_registry.docker_registry
   image_name      = local.project_name

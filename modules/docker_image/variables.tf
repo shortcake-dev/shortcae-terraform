@@ -2,14 +2,15 @@ variable "project" {
   type = string
 }
 
-variable "dockerhub_repo" {
+variable "ghcr_repo" {
   type = string
 }
 
 variable "docker_registry" {
   type = object({
     location      = string
-    repository_id = string
+    name          = string
+    repository_id = string  # TODO: Use just name/id?
   })
 }
 

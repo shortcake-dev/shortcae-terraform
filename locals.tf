@@ -14,5 +14,5 @@ locals {
 
   region = "us-west1"
 
-  dockerhub_repo = "shortcakedev"
+  ghcr_repo = "shortcake-dev"
 }
