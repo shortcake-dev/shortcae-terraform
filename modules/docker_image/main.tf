@@ -64,5 +64,5 @@ resource "null_resource" "docker_image" {
 }
 
 resource "docker_registry_image" "gar_image_push" {
-  name = "${local.google_registry}/${local.complete_image_name}"
+  name = null_resource.docker_image.triggers.gar_image
 }
