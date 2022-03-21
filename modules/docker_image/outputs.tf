@@ -1,3 +1,3 @@
-output "image" {
-  value = null_resource.docker_image.triggers.google_image
-}
+#output "image" {
+#  value = null_resource.docker_image.triggers.google_image
+#}

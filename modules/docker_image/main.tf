@@ -26,9 +26,7 @@ resource "google_service_account" "artifact_registry_image_sa" {
 resource "google_project_iam_member" "artifact_registry_image_sa" {
   project = var.project
   role    = "roles/artifactregistry.repoAdmin"
-  members = [
-    "serviceAccount:${google_service_account.artifact_registry_image_sa.email}"
-  ]
+  member = "serviceAccount:${google_service_account.artifact_registry_image_sa.email}"
 }
 
 data "google_service_account_access_token" "artifact_registry_image_sa_token" {
