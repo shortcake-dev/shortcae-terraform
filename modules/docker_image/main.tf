@@ -51,6 +51,18 @@ resource "docker_image" "ghcr_image" {
   pull_triggers = [data.docker_registry_image.ghcr_image_pull.sha256_digest]
 }
 
+# https://github.com/kreuzwerker/terraform-provider-docker/issues/137
+resource "null_resource" "docker_image" {
+  triggers = {
+    gar_image = "${local.google_registry}/${local.complete_image_name}"
+  }
+  provisioner "local-exec" {
+    command = <<-EOT
+      docker tag ${data.docker_image.ghcr_image.repo_digest} ${self.triggers.gar_image}
+    EOT
+  }
+}
+
 resource "docker_registry_image" "gar_image_push" {
   name = "${local.google_registry}/${local.complete_image_name}"
 }
