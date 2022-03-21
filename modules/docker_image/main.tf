@@ -51,6 +51,6 @@ resource "docker_image" "ghcr_image" {
   pull_triggers = [data.docker_registry_image.ghcr_image.sha256_digest]
 }
 
-data "docker_registry_image" "ghcr_image" {
+data "docker_registry_image" "gar_image" {
   name = "${local.google_registry}/${local.complete_image_name}"
 }
