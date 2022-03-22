@@ -42,7 +42,7 @@ module "cloud_run" {
 
   service_name = local.deployment_name
   region       = local.region
-  image        = module.docker_image.image.name
+  image        = module.docker_image.image
 
   sql_instance = module.database.database
 }
