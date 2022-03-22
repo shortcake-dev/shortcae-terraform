@@ -9,7 +9,8 @@ variable "region" {
 variable "image" {
   type = object({
     name = string
-  })}
+  })
+}
 
 variable "sql_instance" {
   type = object({
