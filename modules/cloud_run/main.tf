@@ -5,7 +5,7 @@ resource "google_cloud_run_service" "cloud_run" {
   template {
     spec {
       containers {
-        image = var.image
+        image = var.image.name
       }
     }
 
