@@ -54,7 +54,7 @@ resource "docker_image" "ghcr_image" {
 # https://github.com/kreuzwerker/terraform-provider-docker/issues/137
 resource "null_resource" "gar_image_push_tag" {
   triggers = {
-    ghcr_image = docker_image.ghcr_image
+    ghcr_image = docker_image.ghcr_image.repo_digest
     gar_image = "${local.google_registry}/${local.complete_image_name}"
   }
   provisioner "local-exec" {
