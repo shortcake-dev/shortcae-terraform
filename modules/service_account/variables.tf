@@ -11,5 +11,5 @@ variable "name" {
 }
 
 variable "roles" {
-  type = list(string)
+  type = set(string)
 }
