@@ -6,10 +6,10 @@ variable "deployment_name" {
   type = string
 }
 
-variable "region" {
+variable "name" {
   type = string
 }
 
-variable "repository_id" {
-  type = string
+variable "roles" {
+  type = set(string)
 }

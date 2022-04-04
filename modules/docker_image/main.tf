@@ -18,19 +18,8 @@ locals {
   ghcr_registry = "ghcr.io/${var.ghcr_repo}"
 }
 
-resource "google_service_account" "artifact_registry_image_sa" {
-  account_id   = "terraform-artifact-registry-sa"
-  display_name = "terraform-artifact-registry-sa"
-}
-
-resource "google_project_iam_member" "artifact_registry_image_sa" {
-  project = var.project
-  role    = "roles/artifactregistry.repoAdmin"
-  member  = "serviceAccount:${google_service_account.artifact_registry_image_sa.email}"
-}
-
 data "google_service_account_access_token" "artifact_registry_image_sa_token" {
-  target_service_account = google_service_account.artifact_registry_image_sa.email
+  target_service_account = var.docker_registry_service_account.email
   scopes                 = ["cloud-platform"]
 }
 

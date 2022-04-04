@@ -2,6 +2,13 @@ variable "project" {
   type = string
 }
 
+variable "docker_registry_service_account" {
+  type = object({
+    name = string
+    email = string
+  })
+}
+
 variable "ghcr_repo" {
   type = string
 }

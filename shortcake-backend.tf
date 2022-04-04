@@ -7,6 +7,9 @@ module "network" {
 module "docker_registry" {
   source = "./modules/docker_registry"
 
+  project = local.project_id
+  deployment_name = var.deployment_name
+
   region        = local.region
   repository_id = local.deployment_name
 }
@@ -15,6 +18,7 @@ module "docker_image" {
   source = "./modules/docker_image"
 
   project = local.project_id
+  docker_registry_service_account = module.docker_registry.service_account
 
   ghcr_repo = local.ghcr_repo
 
