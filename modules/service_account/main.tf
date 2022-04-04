@@ -1,6 +1,9 @@
+resource "random_uuid" "account_id" {
+}
+
 resource "google_service_account" "service_account" {
-  account_id   = "${var.name}-sa-${var.deployment_name}"
-  display_name = var.name
+  account_id   = "sa-${random_uuid.account_id.result}"
+  display_name = "${var.name}-${var.deployment_name}"
 }
 
 resource "google_project_iam_member" "service_account_iam_member" {
